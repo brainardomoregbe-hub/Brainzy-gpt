@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>🤖 BrainzyGPT</title>
+
+<!-- marked + prism for code rendering & highlighting -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prcontent://com.android.externalstorage.documents/tree/primary%3Abrainardcoding::primary:brainardcoding/Mine 🥰/Brainzygpt/Brainzygpt2.htmlism-javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-csharp.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+
+<style>
+:root {
+  --bg:#071021; --panel:#0f1724; --accent:#00e6a8; --muted:#9aa4b2;
+}
+html,body{height:100%;margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;}
+body{background:linear-gradient(180deg,#02030a 0%, var(--bg) 100%); color:#e6eef6; display:flex; align-items:center; justify-content:center; padding:12px;}
+
+.app-container {
+  display:flex;
+  width:100%;
+  max-width:920px;
+  height:92vh;
+  gap:12px;
+}
+
+/* Sidebar */
+.sidebar {
+  width:22px;
+  background:var(--panel);
+  border-radius:12px;
+  padding:12px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  overflow-y:auto;
+  transition: transform 0.3s ease;
+}
+.sidebar.hidden {
+  transform: translateX(-240px);
+}
+#newChatBtn {
+  background: var(--accent);
+  color:#001;
+  border:none;
+  padding:10px;
+  border-radius:8px;
+  font-weight:700;
+  cursor:pointer;
+}
+.chatList button {
+  background:transparent;
+  border:none;
+  color:var(--muted);
+  padding:6px 8px;
+  border-radius:6px;
+  text-align:left;
+  cursor:pointer;
+}
+.chatList button.active { background:rgba(0,230,168,0.2); color:#00e6a8; }
+
+/* Chat area */
+.chat-area {
+  flex:1;
+  display:grid;
+  grid-template-rows:64px 1fr auto;
+  gap:12px;
+}
+header{display:flex;align-items:center;gap:12px;padding:10px 14px;background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:12px}
+.title{font-weight:700;color:var(--accent);font-size:18px}
+.subtitle{color:var(--muted);font-size:13px;margin-left:6px}
+#chat{background:var(--panel);border-radius:12px;padding:12px;overflow:auto;box-shadow:0 8px 24px rgba(0,0,0,0.6);display:flex;flex-direction:column;gap:10px}
+.msg-row{display:flex;flex-direction:column;gap:6px;max-width:92%}
+.msg{padding:10px 14px;border-radius:14px;line-height:1.45;white-space:pre-wrap;word-break:break-word}
+.user-row{align-self:flex-end;align-items:flex-end}
+.bot-row{align-self:flex-start;align-items:flex-start}
+.msg.user{background:linear-gradient(180deg,#0b8f69,#00e6a8);color:#002619;border-bottom-right-radius:6px;max-width:86%}
+.msg.bot{background:linear-gradient(180deg,#081b2e,#0b2740);color:#e6f6ff;border:1px solid rgba(0,230,168,0.06);border-bottom-left-radius:6px;max-width:86%}
+.thinking{font-style:italic;color:var(--muted);}
+.controls{display:flex;gap:8px;align-items:center;padding:8px 0}
+textarea#input{flex:1;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:#071226;color:#e6eef6;outline:none;resize:none;height:64px;font-size:15px}
+button{background:var(--accent);border:none;color:#001;padding:10px 14px;border-radius:10px;font-weight:700;cursor:pointer}
+button.secondary{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted)}
+button.clear{background:#c93c37;color:#fff}
+.status{color:var(--muted);font-size:13px;margin-left:auto}
+pre {background:#0d0d0d;padding:8px;border-radius:8px;overflow:auto}
+.copy-btn{background:transparent;border:1px solid rgba(255,255,255,0.04);padding:6px;border-radius:6px;color:var(--muted);cursor:pointer;margin-left:6px}
+#toggleSidebarBtn {
+  position:absolute; top:12px; left:12px;
+  background:var(--accent); border:none; color:#001; padding:10px 12px; border-radius:8px; cursor:pointer; z-index:10;
+}
+@media (max-width:640px){ .chat-area{grid-template-rows:64px 1fr auto} header .title{font-size:16px} textarea#input{height:72px} }
+</style>
+</head>
+<body>
+
+<button id="toggleSidebarBtn">☰</button>
+
+<div class="app-container">
+  <!-- Sidebar -->
+  <aside class="sidebar hidden">
+    <button id="newChatBtn">+ New Chat</button>
+    <div class="chatList" id="chatList"></div>
+  </aside>
+
+  <!-- Chat Area -->
+  <div class="chat-area">
+    <header>
+      <div style="display:flex;flex-direction:column">
+        <span class="title">🤖 BrainzyGPT</span>
+        <span class="subtitle">Concise · structured</span>
+      </div>
+      <div class="status" id="status">Ready</div>
+    </header>
+
+    <main id="chat" aria-live="polite"></main>
+
+    <div style="display:flex;gap:8px;align-items:center">
+      <div style="flex:1;display:flex">
+        <textarea id="input" placeholder="Ask BrainzyGPT anything"></textarea>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;padding-right:6px">
+        <button id="sendBtn">Send</button>
+        <button id="clearBtn" class="clear">🧹</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ===== CONFIG & MEMORY ===== */
+const API_KEY = "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"; // <-- replace with your key
+const MODEL = "gpt-4o-mini"; 
+const USE_PROXY_FALLBACK = true;
+const CORS_PROXY_PREFIX = "https://corsproxy.io/?";
+
+const chatEl = document.getElementById('chat');
+const inputEl = document.getElementById('input');
+const sendBtn = document.getElementById('sendBtn');
+const clearBtn = document.getElementById('clearBtn');
+const statusEl = document.getElementById('status');
+
+const sidebar = document.querySelector('.sidebar');
+const toggleSidebarBtn = document.getElementById('toggleSidebarBtn');
+const newChatBtn = document.getElementById('newChatBtn');
+const chatListEl = document.getElementById('chatList');
+
+let allChats = []; // multiple chat sessions
+let currentChatIndex = 0;
+let memory = [];
+let isSending = false;
+
+// ===== Functions =====
+
+// Sidebar toggle
+toggleSidebarBtn.addEventListener('click',()=>sidebar.classList.toggle('hidden'));
+
+// Switch chat
+function switchChat(index){
+  if(index===currentChatIndex) return;
+  currentChatIndex=index;
+  memory=allChats[index].memory;
+  chatEl.innerHTML='';
+  memory.forEach(m=>renderMessage(m.role,m.content,false));
+  updateChatList();
+  statusEl.textContent=`Ready — chat ${index+1}`;
+}
+
+// Update chat list UI
+function updateChatList(){
+  chatListEl.innerHTML='';
+  allChats.forEach((c,i)=>{
+    const btn=document.createElement('button');
+    btn.textContent=c.title||`Chat ${i+1}`;
+    btn.className=i===currentChatIndex?'active':'';
+    btn.onclick=()=>switchChat(i);
+    chatListEl.appendChild(btn);
+  });
+}
+
+// Create new chat
+newChatBtn.addEventListener('click',()=>{
+  const newChat={title:`Chat ${allChats.length+1}`, memory:[]};
+  allChats.push(newChat);
+  currentChatIndex=allChats.length-1;
+  memory=newChat.memory;
+  chatEl.innerHTML='';
+  updateChatList();
+  statusEl.textContent='Ready — new chat';
+});
+
+// Render messages (kept exactly your original)
+function renderContentAsHtml(text){
+  try{return marked.parse(text||'');}
+  catch(e){const div=document.createElement('div');div.textContent=text;return div.innerHTML;}
+}
+
+function pushMemory(role,content){
+  memory.push({role,content});
+  if(memory.length>18) memory.splice(0,memory.length-18);
+  allChats[currentChatIndex].memory=memory;
+  statusEl.textContent=`Ready — ${memory.length} msgs`;
+}
+
+function renderMessage(role,content,scroll=true){
+  const row=document.createElement('div');
+  row.className='msg-row '+(role==='user'?'user-row':'bot-row');
+  const bubble=document.createElement('div');
+  bubble.className='msg '+(role==='user'?'user':'bot');
+  if(role==='assistant'){
+    bubble.innerHTML=renderContentAsHtml(content);
+    setTimeout(()=>Prism.highlightAll(),60);
+    setTimeout(()=>{
+      const codes = bubble.querySelectorAll('pre code');
+      codes.forEach(code=>{
+        if(code.__hasCopy) return;
+        const btn=document.createElement('button');
+        btn.className='copy-btn';
+        btn.innerText='Copy code';
+        btn.onclick=async()=>{
+          try{await navigator.clipboard.writeText(code.textContent);statusEl.textContent='Code copied'; setTimeout(()=>statusEl.textContent='Ready',1200);}
+          catch(e){statusEl.textContent='Copy failed'; setTimeout(()=>statusEl.textContent='Ready',1200);}
+        };
+        code.parentNode.insertBefore(btn,code);
+        code.__hasCopy=true;
+      });
+    },120);
+  } else {
+    bubble.textContent=content;
+    bubble.title='Tap to edit';
+    bubble.style.cursor='pointer';
+    bubble.addEventListener('click',()=>beginEdit(bubble,content));
+  }
+  row.appendChild(bubble);
+  chatEl.appendChild(row);
+  if(scroll) chatEl.scrollTop=chatEl.scrollHeight;
+}
+
+// Make typing element
+function makeTypingEl(){
+  const el=document.createElement('div');
+  el.className='msg-row bot-row';
+  const bubble=document.createElement('div');
+  bubble.className='msg bot thinking';
+  bubble.textContent='🤖 BrainzyGPT is thinking...';
+  el.appendChild(bubble);
+  chatEl.appendChild(el);
+  chatEl.scrollTop=chatEl.scrollHeight;
+  return el;
+}
+
+// Call OpenAI
+async function callOpenAI(payload){
+  const url='https://api.openai.com/v1/chat/completions';
+  const headers={'Content-Type':'application/json','Authorization':`Bearer ${API_KEY}`};
+  try{
+    const r=await fetch(url,{method:'POST',headers,body:JSON.stringify(payload)});
+    if(r.ok) return await r.json();
+    if(!USE_PROXY_FALLBACK){ const t=await r.text(); throw new Error(t);}
+  }catch(e){}
+  try{
+    const r2=await fetch(CORS_PROXY_PREFIX+encodeURIComponent(url),{method:'POST',headers,body:JSON.stringify(payload)});
+    if(!r2.ok){ const t=await r2.text(); throw new Error(t);}
+    return await r2.json();
+  }catch(e){ throw e; }
+}
+
+// Build messages
+function buildMessagesForAPI(){ const system={role:'system',content:'You are BrainzyGPT — reply concisely and clearly, use paragraphs and bullet lists when helpful. When asked for code, return properly formatted code blocks. Keep answers friendly and helpful.'}; return [system,...memory.map(m=>({role:m.role==='assistant'?'assistant':'user',content:m.content}))];}
+
+// Send message
+async function sendMessage(){
+  if(isSending) return;
+  const text=inputEl.value.trim();
+  if(!text) return;
+  renderMessage('user',text);
+  pushMemory('user',text);
+  inputEl.value='';
+  const typingEl=makeTypingEl();
+  isSending=true;
+  statusEl.textContent='Thinking...';
+  try{
+    const payload={model:MODEL,messages:buildMessagesForAPI(),temperature:0.2,max_tokens:700};
+    const result=await callOpenAI(payload);
+    const reply=result?.choices?.[0]?.message?.content||'⚠️ No response from API';
+    if(typingEl && typingEl.parentNode) typingEl.parentNode.removeChild(typingEl);
+    renderMessage('assistant',reply);
+    pushMemory('assistant',reply);
+    statusEl.textContent='Ready';
+  }catch(err){
+    if(typingEl && typingEl.parentNode) typingEl.parentNode.removeChild(typingEl);
+    renderMessage('assistant','❌ Error: '+(err.message||'Request failed'));
+    statusEl.textContent='Error';
+  }finally{isSending=false;setTimeout(()=>Prism.highlightAll(),80);}
+}
+
+// Event listeners
+sendBtn.addEventListener('click',sendMessage);
+inputEl.addEventListener('keydown',(e)=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){e.preventDefault();sendMessage();}});
+clearBtn.addEventListener('click',()=>{
+  chatEl.style.opacity='0';
+  setTimeout(()=>{
+    chatEl.innerHTML='';
+    memory=[];
+    allChats[currentChatIndex].memory=[];
+    chatEl.style.opacity='1';
+    statusEl.textContent='Cleared';
+  },260);
+});
+
+// Edit message (keep your existing edit logic)
+function beginEdit(bubbleEl, oldText){
+  const editor=document.createElement('div');
+  editor.style.display='flex';
+  editor.style.gap='8px';
+  editor.style.marginTop='6px';
+
+  const input=document.createElement('input');
+  input.type='text';
+  input.value=oldText;
+  input.style.flex='1';
+  input.style.padding='8px';
+  input.style.borderRadius='8px';
+  input.style.border='1px solid rgba(255,255,255,0.04)';
+  input.style.background='rgba(255,255,255,0.02)';
+  input.style.color='#e6eef6';
+
+  const saveBtn=document.createElement('button');
+  saveBtn.innerText='Update';
+  saveBtn.onclick=async()=>{
+    const newText=input.value.trim();
+    if(!newText) return;
+    bubbleEl.textContent=newText;
+    let memoryIndex=-1;
+    for(let i=memory.length-1;i>=0;i--){if(memory[i].role==='user'&&memory[i].content===oldText){memoryIndex=i;break;}}
+    if(memoryIndex===-1) memoryIndex=memory.length-1;
+    memory[memoryIndex].content=newText;
+    allChats[currentChatIndex].memory=memory;
+    editor.remove();
+    statusEl.textContent='Sending updated message...';
+    try{
+      const typingEl=makeTypingEl();
+      const systemMsg={role:'system',content:'You are BrainzyGPT — reply concisely and clearly, use paragraphs and bullet lists when helpful. When asked for code, return properly formatted code blocks. Keep answers friendly and helpful.'};
+      const editedMsg={role:'user',content:newText};
+      const msgsForAPI=[systemMsg,editedMsg];
+      const payload={model:MODEL,messages:msgsForAPI,temperature:0.2,max_tokens:700};
+      const result=await callOpenAI(payload);
+      const reply=result?.choices?.[0]?.message?.content||'⚠️ No response from API';
+      if(typingEl && typingEl.parentNode) typingEl.parentNode.removeChild(typingEl);
+      renderMessage('assistant',reply);
+      pushMemory('assistant',reply);
+      statusEl.textContent='Ready';
+    }catch(err){statusEl.textContent='Error sending edited message'; console.error(err);}
+  };
+
+  const cancelBtn=document.createElement('button');
+  cancelBtn.className='secondary';
+  cancelBtn.innerText='Cancel';
+  cancelBtn.onclick=()=>editor.remove();
+
+  editor.appendChild(input);
+  editor.appendChild(saveBtn);
+  editor.appendChild(cancelBtn);
+  bubbleEl.parentNode.appendChild(editor);
+  input.focus();
+  input.select();
+}
+
+// ===== INIT =====
+newChatBtn.click(); // create first chat
+</script>
+
+</body>
+</html>
